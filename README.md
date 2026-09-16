@@ -14,7 +14,10 @@ A lightweight, always-on-top Dynamic Island for everyday tasks on Windows 11.
 - Customizable focus and break Pomodoro durations
 - Quick actions to lock Windows and open Spotify
 - Customizable global keyboard shortcuts
-- Optional launch at Windows startup
+- Launches with Windows by default and remembers when the user turns it off
+- System tray controls to show, hide, open Settings, or quit the application
+- Native Windows notifications for Pomodoro and battery events
+- Signed automatic updates delivered through GitHub Releases
 - A power button in the header to quit the application completely
 
 ## Install on Windows 11
@@ -36,6 +39,9 @@ Windows 11 normally includes Microsoft Edge WebView2 Runtime. If the application
 - Move the pointer outside the island to collapse it.
 - Select the power button in the header to quit the application.
 - Open the **Settings** tab to enable launch at startup, choose visible modules, or change keyboard shortcuts.
+- Left-click the system tray icon to show or hide the island. Right-click it for Settings and Quit.
+- Configure Pomodoro, low-battery, and fully-charged notifications in **Settings**.
+- Use **Settings → Update** to check for and install a release manually. The app also checks shortly after startup.
 
 ### Default keyboard shortcuts
 
@@ -82,10 +88,47 @@ src-tauri/target/release/bundle/nsis/Dynamic Island_*_x64-setup.exe
 src-tauri/target/release/bundle/msi/Dynamic Island_*_x64_en-US.msi
 ```
 
-The `src-tauri/target/` directory is excluded from Git. To let users install the application without building it from source, upload the generated `.exe` or `.msi` file to **GitHub Releases**.
+The `src-tauri/target/` directory is excluded from Git. Local builds are suitable for testing; publish distributable builds with the signed release workflow below so automatic updates receive the required signature and `latest.json` metadata.
+
+## Publish a signed release
+
+Automatic updates require every update bundle to be signed with the same private key. The release workflow creates the GitHub Release, so do not create a duplicate release or tag manually before running it.
+
+### One-time GitHub setup
+
+1. Back up `.tauri/dynamic-island.key` in a secure location. Losing this key prevents existing installations from accepting future updates.
+2. In the GitHub repository, open **Settings → Secrets and variables → Actions**.
+3. Select **New repository secret**.
+4. Enter `TAURI_SIGNING_PRIVATE_KEY` as the name.
+5. Paste the complete contents of `.tauri/dynamic-island.key` as the value and save it.
+
+The private key is excluded from Git. Never commit it, upload it as a release asset, or share it publicly.
+
+### Create a release
+
+1. Choose a new version number, for example `0.2.1`.
+2. Set the same version in:
+   - `package.json` and `package-lock.json`
+   - `src-tauri/Cargo.toml`
+   - `src-tauri/tauri.conf.json`
+3. Verify the release locally:
+
+   ```powershell
+   npm run build
+   cargo test --manifest-path src-tauri/Cargo.toml
+   ```
+
+4. Commit and push all release changes to the default branch.
+5. On GitHub, open **Actions → Release Dynamic Island**.
+6. Select **Run workflow**, choose the branch containing the version change, and confirm **Run workflow**.
+7. Wait for the workflow to finish successfully, then open the generated release.
+8. Confirm that the release contains the NSIS installer, its updater signature, and `latest.json`.
+
+The workflow in `.github/workflows/release.yml` creates the `v<version>` tag, builds the Windows installer, signs the updater bundle, publishes the release, and uploads the metadata used by installed copies to find new versions.
 
 ## Notes
 
 - Media controls use Windows Global System Media Transport Controls. Spotify, Chrome, or Edge must be playing media with media integration enabled.
+- Windows notifications display the installed application name and icon. Development builds can display a PowerShell identity instead.
 - If another application already uses a default shortcut, change it in the **Settings** tab.
 - Only one instance of Dynamic Island can run at a time.

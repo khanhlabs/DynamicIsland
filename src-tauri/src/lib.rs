@@ -1,6 +1,7 @@
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use sysinfo::{Components, Networks, System};
+use tauri::{Emitter, Manager};
 
 struct MonitorState {
     system: System,
@@ -205,6 +206,31 @@ async fn get_media_snapshot() -> Result<Option<MediaSnapshot>, String> {
     let playback = session
         .GetPlaybackInfo()
         .map_err(|error| error.to_string())?;
+    let playback_status = playback.PlaybackStatus().ok();
+    if matches!(
+        playback_status,
+        Some(GlobalSystemMediaTransportControlsSessionPlaybackStatus::Closed)
+            | Some(GlobalSystemMediaTransportControlsSessionPlaybackStatus::Stopped)
+    ) {
+        return Ok(None);
+    }
+
+    let title = properties
+        .Title()
+        .map(|value| value.to_string())
+        .unwrap_or_default();
+    let artist = properties
+        .Artist()
+        .map(|value| value.to_string())
+        .unwrap_or_default();
+    let source = session
+        .SourceAppUserModelId()
+        .map(|value| value.to_string())
+        .unwrap_or_default();
+    if title.trim().is_empty() || source.trim().is_empty() {
+        return Ok(None);
+    }
+
     let timeline = session.GetTimelineProperties().ok();
     let (position_seconds, duration_seconds) = timeline
         .and_then(|timeline| {
@@ -216,19 +242,10 @@ async fn get_media_snapshot() -> Result<Option<MediaSnapshot>, String> {
         .unwrap_or((0, 0));
 
     Ok(Some(MediaSnapshot {
-        title: properties
-            .Title()
-            .map(|value| value.to_string())
-            .unwrap_or_default(),
-        artist: properties
-            .Artist()
-            .map(|value| value.to_string())
-            .unwrap_or_default(),
-        source: session
-            .SourceAppUserModelId()
-            .map(|value| value.to_string())
-            .unwrap_or_default(),
-        playing: playback.PlaybackStatus().ok()
+        title,
+        artist,
+        source,
+        playing: playback_status
             == Some(GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing),
         position_seconds,
         duration_seconds,
@@ -320,6 +337,65 @@ fn ease_in_out_cubic(progress: f64) -> f64 {
     }
 }
 
+fn show_main_window(app: &tauri::AppHandle, open_settings: bool) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        if open_settings {
+            let _ = window.emit("open-settings", ());
+        }
+    }
+}
+
+fn toggle_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        if window.is_visible().unwrap_or(false) {
+            let _ = window.hide();
+        } else {
+            show_main_window(app, false);
+        }
+    }
+}
+
+fn create_tray(app: &tauri::App) -> tauri::Result<()> {
+    use tauri::{
+        menu::{Menu, MenuItem, PredefinedMenuItem},
+        tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    };
+
+    let toggle_item = MenuItem::with_id(app, "toggle", "Mở / ẩn Island", true, None::<&str>)?;
+    let settings_item = MenuItem::with_id(app, "settings", "Cài đặt", true, None::<&str>)?;
+    let separator = PredefinedMenuItem::separator(app)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Thoát", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&toggle_item, &settings_item, &separator, &quit_item])?;
+
+    let mut tray = TrayIconBuilder::new()
+        .tooltip("Dynamic Island")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "toggle" => toggle_main_window(app),
+            "settings" => show_main_window(app, true),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                toggle_main_window(tray.app_handle());
+            }
+        });
+    if let Some(icon) = app.default_window_icon() {
+        tray = tray.icon(icon.clone());
+    }
+    tray.build(app)?;
+    Ok(())
+}
+
 #[tauri::command]
 #[cfg(windows)]
 async fn animate_island(window: tauri::WebviewWindow, open: bool) -> Result<(), String> {
@@ -399,7 +475,6 @@ fn animate_island(window: tauri::WebviewWindow, open: bool) -> Result<(), String
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    use tauri::Manager;
     use tauri_plugin_autostart::MacosLauncher;
 
     let state = AppState {
@@ -408,17 +483,20 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
+            show_main_window(app, false);
         }))
         .manage(state)
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec!["--autostart"]),
         ))
+        .setup(|app| {
+            create_tray(app)?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_system_snapshot,
             get_media_snapshot,
