@@ -48,7 +48,6 @@ Windows 11 normally includes Microsoft Edge WebView2 Runtime. If the application
 | Shortcut | Action |
 | --- | --- |
 | `Ctrl+Alt+Space` | Show or hide the island |
-| `Ctrl+Alt+M` | Mute or unmute system audio |
 | `Ctrl+Alt+P` | Play or pause media |
 | `Ctrl+Alt+L` | Lock Windows |
 | `Ctrl+Alt+S` | Open Spotify |

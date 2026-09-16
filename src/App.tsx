@@ -23,7 +23,7 @@ type MediaData = {
   title: string; artist: string; source: string; playing: boolean;
   positionSeconds: number; durationSeconds: number;
 };
-type Hotkeys = { toggleIsland: string; mute: string; media: string; lock: string; spotify: string };
+type Hotkeys = { toggleIsland: string; media: string; lock: string; spotify: string };
 type Modules = { battery: boolean; media: boolean; pomodoro: boolean };
 type NotificationPreferences = { pomodoro: boolean; lowBattery: boolean; fullyCharged: boolean };
 type UpdateStatus = "idle" | "checking" | "available" | "installing" | "current" | "error" | "development";
@@ -32,7 +32,7 @@ type PomodoroState = {
 };
 
 const DEFAULT_HOTKEYS: Hotkeys = {
-  toggleIsland: "Ctrl+Alt+Space", mute: "Ctrl+Alt+M", media: "Ctrl+Alt+P",
+  toggleIsland: "Ctrl+Alt+Space", media: "Ctrl+Alt+P",
   lock: "Ctrl+Alt+L", spotify: "Ctrl+Alt+S",
 };
 const DEFAULT_MODULES: Modules = { battery: true, media: true, pomodoro: true };
@@ -364,7 +364,6 @@ function App() {
         await unregisterAll();
         if (cancelled) return;
         await register(hotkeys.toggleIsland, (event) => { if (event.state === "Pressed") void toggleVisibility(); });
-        await register(hotkeys.mute, (event) => { if (event.state === "Pressed") void runCommand("toggle_mute"); });
         await register(hotkeys.media, (event) => { if (event.state === "Pressed") void runCommand("media_control", { action: "toggle" }); });
         await register(hotkeys.lock, (event) => { if (event.state === "Pressed") void runCommand("lock_computer"); });
         await register(hotkeys.spotify, (event) => { if (event.state === "Pressed") void runCommand("open_spotify"); });
@@ -758,119 +757,124 @@ function App() {
             </div>
           ) : (
             <div className="settings-panel">
-              <section className="startup-settings">
-                <div className="section-heading">
-                  <div><strong>Khởi động</strong><span>Chạy nền cùng Windows</span></div>
-                  <label className="switch">
-                    <input type="checkbox" checked={autostart} onChange={(event) => void setStartup(event.target.checked)} />
-                    <i />
-                  </label>
-                </div>
-              </section>
-              <section className="update-settings">
-                <div className="section-heading update-heading">
-                  <div><strong>Cập nhật</strong><span>{updateDescription[updateStatus]}</span></div>
-                  <button
-                    className="update-button"
-                    disabled={updateBusy}
-                    onClick={() => void (updateStatus === "available" ? installAvailableUpdate() : checkForUpdates(true))}
-                  >
-                    {updateButtonLabel}
-                  </button>
-                </div>
-              </section>
-              <section className="notification-settings">
-                <div className="section-title"><strong>Thông báo Windows</strong><span>Chỉ báo những sự kiện quan trọng</span></div>
-                <div className="notification-list">
-                  {([
-                    ["pomodoro", "Pomodoro", "Khi kết thúc một phiên"],
-                    ["lowBattery", "Pin yếu", "Khi pin còn 20% hoặc 10%"],
-                    ["fullyCharged", "Pin đầy", "Khi pin sạc đạt 100%"],
-                  ] as Array<[keyof NotificationPreferences, string, string]>).map(([key, label, description]) => (
-                    <div className="notification-option" key={key}>
-                      <label htmlFor={`notification-${key}`}>
-                        <strong>{label}</strong>
-                        <small>{description}</small>
-                      </label>
-                      <label className="switch" htmlFor={`notification-${key}`}>
+              <div className="settings-column settings-column-left">
+                <section className="notification-settings">
+                  <div className="section-title"><strong>Thông báo Windows</strong><span>Chỉ báo những sự kiện quan trọng</span></div>
+                  <div className="notification-list">
+                    {([
+                      ["pomodoro", "Pomodoro", "Khi kết thúc một phiên"],
+                      ["lowBattery", "Pin yếu", "Khi pin còn 20% hoặc 10%"],
+                      ["fullyCharged", "Pin đầy", "Khi pin sạc đạt 100%"],
+                    ] as Array<[keyof NotificationPreferences, string, string]>).map(([key, label, description]) => (
+                      <div className="notification-option" key={key}>
+                        <label htmlFor={`notification-${key}`}>
+                          <strong>{label}</strong>
+                          <small>{description}</small>
+                        </label>
+                        <label className="switch" htmlFor={`notification-${key}`}>
+                          <input
+                            id={`notification-${key}`}
+                            type="checkbox"
+                            checked={notificationPreferences[key]}
+                            onChange={(event) => setNotificationPreferences((current) => ({
+                              ...current, [key]: event.target.checked,
+                            }))}
+                          />
+                          <i />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <section className="module-settings">
+                  <div className="section-title"><strong>Mô-đun hiển thị</strong><span>Chọn nội dung trong bảng mở rộng</span></div>
+                  <div className="module-grid">
+                    {(Object.keys(modules) as Array<keyof Modules>).map((key) => (
+                      <label key={key} className={modules[key] ? "selected" : ""}>
                         <input
-                          id={`notification-${key}`}
                           type="checkbox"
-                          checked={notificationPreferences[key]}
-                          onChange={(event) => setNotificationPreferences((current) => ({
-                            ...current, [key]: event.target.checked,
-                          }))}
+                          checked={modules[key]}
+                          onChange={(event) => setModules((current) => ({ ...current, [key]: event.target.checked }))}
                         />
-                        <i />
+                        {key === "battery" ? "Pin" : key === "media" ? "Media" : "Pomodoro"}
                       </label>
-                    </div>
-                  ))}
-                </div>
-              </section>
-              <section className="module-settings">
-                <div className="section-title"><strong>Mô-đun hiển thị</strong><span>Chọn nội dung trong bảng mở rộng</span></div>
-                <div className="module-grid">
-                  {(Object.keys(modules) as Array<keyof Modules>).map((key) => (
-                    <label key={key} className={modules[key] ? "selected" : ""}>
+                    ))}
+                  </div>
+                </section>
+                <section className="duration-settings">
+                  <div className="section-title"><strong>Thời lượng Pomodoro</strong><span>Đơn vị phút</span></div>
+                  <div className="duration-row">
+                    <label htmlFor="focus-duration">
+                      Tập trung
                       <input
-                        type="checkbox"
-                        checked={modules[key]}
-                        onChange={(event) => setModules((current) => ({ ...current, [key]: event.target.checked }))}
-                      />
-                      {key === "battery" ? "Pin" : key === "media" ? "Media" : "Pomodoro"}
-                    </label>
-                  ))}
-                </div>
-              </section>
-              <section className="duration-settings">
-                <div className="section-title"><strong>Thời lượng Pomodoro</strong><span>Đơn vị phút</span></div>
-                <div className="duration-row">
-                  <label htmlFor="focus-duration">
-                    Tập trung
-                    <input
-                      id="focus-duration"
-                      type="number"
-                      min="1"
-                      max="120"
-                      value={focusMinutes}
-                      onChange={(event) => setFocusMinutes(Math.max(1, Number(event.target.value)))}
-                    />
-                  </label>
-                  <label htmlFor="break-duration">
-                    Nghỉ
-                    <input
-                      id="break-duration"
-                      type="number"
-                      min="1"
-                      max="60"
-                      value={breakMinutes}
-                      onChange={(event) => setBreakMinutes(Math.max(1, Number(event.target.value)))}
-                    />
-                  </label>
-                </div>
-              </section>
-              <section className="hotkey-settings">
-                <div className="section-title"><strong>Phím tắt toàn cục</strong><span>Dùng định dạng Ctrl+Alt+K</span></div>
-                <div className="hotkey-list">
-                  {([
-                    ["toggleIsland", "Mở / ẩn Island"], ["mute", "Mute / unmute"], ["media", "Play / pause"],
-                    ["lock", "Khóa máy"], ["spotify", "Mở Spotify"],
-                  ] as Array<[keyof Hotkeys, string]>).map(([key, label]) => (
-                    <label key={key} htmlFor={`hotkey-${key}`}>
-                      <span>{label}</span>
-                      <input
-                        id={`hotkey-${key}`}
-                        value={hotkeyDraft[key]}
-                        onChange={(event) => setHotkeyDraft((current) => ({ ...current, [key]: event.target.value }))}
+                        id="focus-duration"
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={focusMinutes}
+                        onChange={(event) => setFocusMinutes(Math.max(1, Number(event.target.value)))}
                       />
                     </label>
-                  ))}
-                </div>
-                <div className="hotkey-actions">
-                  <button className="save-hotkeys" onClick={() => { setHotkeys(hotkeyDraft); showNotice("Đã lưu phím tắt"); }}>Lưu phím tắt</button>
-                  <button className="reset-hotkeys" onClick={() => { setHotkeyDraft(DEFAULT_HOTKEYS); setHotkeys(DEFAULT_HOTKEYS); }}>Khôi phục mặc định</button>
-                </div>
-              </section>
+                    <label htmlFor="break-duration">
+                      Nghỉ
+                      <input
+                        id="break-duration"
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={breakMinutes}
+                        onChange={(event) => setBreakMinutes(Math.max(1, Number(event.target.value)))}
+                      />
+                    </label>
+                  </div>
+                </section>
+              </div>
+
+              <div className="settings-column settings-column-right">
+                <section className="startup-settings">
+                  <div className="section-heading">
+                    <div><strong>Khởi động</strong><span>Chạy nền cùng Windows</span></div>
+                    <label className="switch">
+                      <input type="checkbox" checked={autostart} onChange={(event) => void setStartup(event.target.checked)} />
+                      <i />
+                    </label>
+                  </div>
+                </section>
+                <section className="update-settings">
+                  <div className="section-heading update-heading">
+                    <div><strong>Cập nhật</strong><span>{updateDescription[updateStatus]}</span></div>
+                    <button
+                      className="update-button"
+                      disabled={updateBusy}
+                      onClick={() => void (updateStatus === "available" ? installAvailableUpdate() : checkForUpdates(true))}
+                    >
+                      {updateButtonLabel}
+                    </button>
+                  </div>
+                </section>
+                <section className="hotkey-settings">
+                  <div className="section-title"><strong>Phím tắt toàn cục</strong><span>Dùng định dạng Ctrl+Alt+K</span></div>
+                  <div className="hotkey-list">
+                    {([
+                      ["toggleIsland", "Mở / ẩn Island"], ["media", "Play / pause"],
+                      ["lock", "Khóa máy"], ["spotify", "Mở Spotify"],
+                    ] as Array<[keyof Hotkeys, string]>).map(([key, label]) => (
+                      <label key={key} htmlFor={`hotkey-${key}`}>
+                        <span>{label}</span>
+                        <input
+                          id={`hotkey-${key}`}
+                          value={hotkeyDraft[key]}
+                          onChange={(event) => setHotkeyDraft((current) => ({ ...current, [key]: event.target.value }))}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="hotkey-actions">
+                    <button className="save-hotkeys" onClick={() => { setHotkeys(hotkeyDraft); showNotice("Đã lưu phím tắt"); }}>Lưu phím tắt</button>
+                    <button className="reset-hotkeys" onClick={() => { setHotkeyDraft(DEFAULT_HOTKEYS); setHotkeys(DEFAULT_HOTKEYS); }}>Khôi phục mặc định</button>
+                  </div>
+                </section>
+              </div>
             </div>
           )}
         </div>

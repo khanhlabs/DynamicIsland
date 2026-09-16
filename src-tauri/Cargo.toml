@@ -1,6 +1,6 @@
 [package]
 name = "dynamic-island"
-version = "0.2.0"
+version = "0.2.1"
 description = "A useful Dynamic Island for Windows 11"
 authors = ["Dynamic Island"]
 edition = "2024"

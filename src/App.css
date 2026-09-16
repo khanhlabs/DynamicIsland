@@ -212,8 +212,9 @@ button {
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.12);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+  text-align: center;
   min-width: 58px;
 }
 
@@ -319,6 +320,7 @@ button {
   display: none;
 }
 .tabs button {
+  flex: 0 0 120px;
   height: 32px;
   padding: 0 14px;
   border-radius: 10px;
@@ -327,6 +329,7 @@ button {
   color: var(--muted);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   font-size: 11px;
   font-weight: 650;
@@ -935,31 +938,30 @@ button {
 /* Settings Panel */
 .settings-panel {
   display: grid;
-  grid-template-columns: 1fr 1.3fr;
-  grid-template-rows: auto auto auto auto 1fr;
-  grid-template-areas:
-    "startup hotkeys"
-    "update hotkeys"
-    "notifications hotkeys"
-    "modules hotkeys"
-    "duration hotkeys";
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   padding-top: 6px;
+  align-items: stretch;
+}
+
+.settings-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .settings-panel section {
+  min-width: 0;
   padding: 14px;
   border-radius: 16px;
   border: 1px solid var(--card-border);
   background: var(--card);
 }
 
-.startup-settings { grid-area: startup; }
-.update-settings { grid-area: update; }
-.notification-settings { grid-area: notifications; }
-.module-settings { grid-area: modules; }
-.duration-settings { grid-area: duration; }
-.hotkey-settings { grid-area: hotkeys; }
+.settings-column-right .hotkey-settings {
+  flex: 1;
+}
 
 .section-heading, .section-title {
   display: flex;
