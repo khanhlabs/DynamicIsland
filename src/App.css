@@ -53,7 +53,7 @@ button {
 .island-shell {
   width: 100%;
   height: 100%;
-  padding: 4px;
+  padding: 2px;
   position: relative;
   background: transparent;
   display: flex;
@@ -79,12 +79,12 @@ button {
 /* Island Top Bar */
 .island-bar {
   width: 100%;
-  height: 48px;
+  height: 34px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  padding: 0 8px 0 10px;
-  gap: 8px;
+  padding: 2px 10px 0;
+  gap: 6px;
   border-radius: 9999px;
   background: #070e1a;
   border: 1px solid var(--card-border);
@@ -103,6 +103,7 @@ button {
   width: 100%;
   height: 52px;
   padding: 0 12px;
+  gap: 8px;
   border: 1px solid var(--neon-border);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55),
               0 0 24px rgba(56, 130, 246, 0.2),
@@ -118,20 +119,37 @@ button {
 }
 
 .battery-pill {
-  height: 30px;
-  padding: 0 10px;
+  height: 22px;
+  padding: 0 5px;
   border-radius: 9999px;
   background: rgba(16, 185, 129, 0.16);
   border: 1px solid rgba(16, 185, 129, 0.38);
   color: #34d399;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 9px;
   font-weight: 750;
   letter-spacing: -0.01em;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
   flex-shrink: 0;
+}
+
+.battery-pill svg {
+  width: 12px;
+  height: 12px;
+}
+
+.expanded .battery-pill {
+  height: 30px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.expanded .battery-pill svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Center Section of Bar */
@@ -145,15 +163,16 @@ button {
 .media-pill {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 3px;
   min-width: 0;
   max-width: 100%;
-  padding: 4px 8px;
+  padding: 0;
   border-radius: 9999px;
   transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .expanded .media-pill {
+  gap: 7px;
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(56, 189, 248, 0.28);
   padding: 5px 14px;
@@ -163,12 +182,23 @@ button {
 .pill-music-icon {
   flex-shrink: 0;
   color: #38bdf8;
+  width: 12px;
+  height: 12px;
 }
 .pill-pomodoro-icon {
   flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.expanded .pill-music-icon,
+.expanded .pill-pomodoro-icon {
+  width: 15px;
+  height: 15px;
 }
 
 .pill-title {
+  display: none;
   font-size: 11px;
   font-weight: 550;
   color: #f1f5f9;
@@ -178,16 +208,21 @@ button {
   letter-spacing: -0.01em;
 }
 .expanded .pill-title {
+  display: block;
   font-size: 12px;
 }
 
 .pill-live-dot {
-  width: 5px;
-  height: 5px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: #64748b;
   flex-shrink: 0;
   transition: background 200ms, box-shadow 200ms;
+}
+.expanded .pill-live-dot {
+  width: 5px;
+  height: 5px;
 }
 .pill-live-dot.active {
   background: #34d399;
@@ -198,14 +233,18 @@ button {
 .bar-right {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   justify-content: flex-end;
   flex-shrink: 0;
 }
 
+.expanded .bar-right {
+  gap: 7px;
+}
+
 .clock-group {
-  height: 30px;
-  padding: 0 9px;
+  height: 22px;
+  padding: 0 4px;
   border-radius: 9999px;
   background: rgba(59, 130, 246, 0.12);
   border: 1px solid rgba(59, 130, 246, 0.34);
@@ -215,11 +254,17 @@ button {
   align-items: center;
   justify-content: center;
   text-align: center;
+  min-width: 44px;
+}
+
+.expanded .clock-group {
+  height: 30px;
+  padding: 0 9px;
   min-width: 58px;
 }
 
 .clock-time {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #f8fafc;
   font-variant-numeric: tabular-nums;
@@ -247,8 +292,8 @@ button {
 }
 
 .header-power-button {
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border-radius: 50%;
   display: grid;
@@ -258,6 +303,21 @@ button {
   border: 1px solid rgba(239, 68, 68, 0.34);
   transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
   flex-shrink: 0;
+}
+
+.header-power-button svg {
+  width: 11px;
+  height: 11px;
+}
+
+.expanded .header-power-button {
+  width: 30px;
+  height: 30px;
+}
+
+.expanded .header-power-button svg {
+  width: 15px;
+  height: 15px;
 }
 .header-power-button:hover,
 .header-power-button:focus-visible {

@@ -408,7 +408,7 @@ async fn animate_island(window: tauri::WebviewWindow, open: bool) -> Result<(), 
     let size = window.outer_size().map_err(|error| error.to_string())?;
     let scale = window.scale_factor().map_err(|error| error.to_string())?;
     let native_handle = window.hwnd().map_err(|error| error.to_string())?.0 as usize;
-    let (logical_width, logical_height) = if open { (680.0, 660.0) } else { (328.0, 56.0) };
+    let (logical_width, logical_height) = if open { (680.0, 660.0) } else { (220.0, 38.0) };
     let target_width = (logical_width * scale).round() as i32;
     let target_height = (logical_height * scale).round() as i32;
     let start_width = size.width as i32;
@@ -460,7 +460,7 @@ fn animate_island(window: tauri::WebviewWindow, open: bool) -> Result<(), String
     let position = window.outer_position().map_err(|error| error.to_string())?;
     let size = window.outer_size().map_err(|error| error.to_string())?;
     let scale = window.scale_factor().map_err(|error| error.to_string())?;
-    let (width, height) = if open { (680.0, 660.0) } else { (328.0, 56.0) };
+    let (width, height) = if open { (680.0, 660.0) } else { (220.0, 38.0) };
     let center_x = position.x as f64 / scale + size.width as f64 / scale / 2.0;
     window
         .set_size(LogicalSize::new(width, height))
